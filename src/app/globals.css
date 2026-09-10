@@ -1,0 +1,308 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --clr: #00ad54;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+} */
+
+
+
+#popupplate {
+  visibility: hidden;
+  transition-delay: 0.5s;
+}
+
+#hoverplate:hover #popupplate {
+  transition-delay: 0s;
+  visibility: visible;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.airport-date-picker {
+  width: 100%;
+  max-width: 285px;
+  font-size: 13px;
+}
+
+.airport-date-picker .rdp-months {
+  display: flex;
+  justify-content: center;
+}
+
+.airport-date-picker .rdp-month {
+  width: 100%;
+}
+
+.airport-date-picker .rdp-month_caption,
+.airport-date-picker .rdp-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.airport-date-picker .rdp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.airport-date-picker .rdp-button_previous,
+.airport-date-picker .rdp-button_next,
+.airport-date-picker .rdp-nav_button {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.airport-date-picker .rdp-month_grid,
+.airport-date-picker .rdp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  table-layout: fixed;
+}
+
+.airport-date-picker .rdp-weekdays,
+.airport-date-picker .rdp-head_row {
+  display: grid;
+  grid-template-columns: repeat(7, 30px);
+  gap: 2px;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.airport-date-picker .rdp-weekday,
+.airport-date-picker .rdp-head_cell {
+  width: 30px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #374151;
+}
+
+.airport-date-picker .rdp-week,
+.airport-date-picker .rdp-row {
+  display: grid;
+  grid-template-columns: repeat(7, 30px);
+  gap: 2px;
+  justify-content: center;
+}
+
+.airport-date-picker .rdp-day,
+.airport-date-picker .rdp-cell {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.airport-date-picker .rdp-day_button,
+.airport-date-picker .rdp-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.airport-date-picker .rdp-day_button:hover,
+.airport-date-picker .rdp-button:hover {
+  background: #eff6ff;
+}
+
+.airport-date-picker .rdp-day_selected,
+.airport-date-picker .rdp-day_selected .rdp-day_button,
+.airport-date-picker .rdp-day_selected .rdp-button {
+  background: #2563eb;
+  color: white;
+}
+
+.airport-date-picker .rdp-day_blocked,
+.airport-date-picker .rdp-day_blocked .rdp-day_button,
+.airport-date-picker .rdp-day_blocked .rdp-button {
+  background: #fee2e2;
+  color: #991b1b;
+  text-decoration: line-through;
+  font-weight: 700;
+}
+
+.airport-date-picker .rdp-day_disabled,
+.airport-date-picker .rdp-day_disabled .rdp-day_button,
+.airport-date-picker .rdp-day_disabled .rdp-button {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+
+/* From Uiverse.io by adamgiebl */
+.cssbuttons-io-button {
+  background: #a370f0;
+  color: white;
+  font-family: inherit;
+  padding: 0.35em;
+  padding-left: 1.2em;
+  font-size: 17px;
+  font-weight: 500;
+  border-radius: 0.9em;
+  border: none;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em #714da6;
+  overflow: hidden;
+  position: relative;
+  height: 2.8em;
+  padding-right: 3.3em;
+  cursor: pointer;
+}
+
+.cssbuttons-io-button .icon {
+  background: white;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.2em;
+  width: 2.2em;
+  border-radius: 0.7em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em #7b52b9;
+  right: 0.3em;
+  transition: all 0.3s;
+}
+
+.cssbuttons-io-button:hover .icon {
+  width: calc(100% - 0.6em);
+}
+
+.cssbuttons-io-button .icon svg {
+  width: 1.1em;
+  transition: transform 0.3s;
+  color: #7b52b9;
+}
+
+.cssbuttons-io-button:hover .icon svg {
+  transform: translateX(0.1em);
+}
+
+.cssbuttons-io-button:active .icon {
+  transform: scale(0.95);
+}
+
+
+/* From Uiverse.io by Creatlydev */
+.button {
+  width: 30%;
+  text-decoration: none;
+  line-height: 1;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 10px 10px 20px rgba(0, 0, 0, .05);
+  background-color: #fff;
+  color: #121212;
+  border: none;
+  cursor: pointer;
+}
+
+.button-decor {
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  transition: transform .3s;
+  z-index: 0;
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.button__icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+}
+
+.button__text {
+  display: inline-block;
+  transition: color .2s;
+  padding: 2px 1.5rem 2px;
+  padding-left: .75rem;
+  white-space: nowrap;
+  max-width: 150px;
+}
+
+.button:hover .button__text {
+  color: #fff;
+}
+
+.button:hover .button-decor {
+  transform: translate(0);
+}
+
+
+#listPage::-webkit-scrollbar,
+#navaside::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+#listPage::-webkit-scrollbar-track,
+#navaside::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-left: 1px solid #e5e7eb;
+}
+
+#listPage::-webkit-scrollbar-thumb,
+#navaside::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 3px solid #f3f4f6;
+}
+
+#listPage::-webkit-scrollbar-thumb:hover,
+#navaside::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+#listPage::-webkit-scrollbar-corner,
+#navaside::-webkit-scrollbar-corner {
+  background: #f3f4f6;
+}
