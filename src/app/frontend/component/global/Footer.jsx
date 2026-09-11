@@ -39,24 +39,42 @@ const Footer = () => {
             <div>
               <h3 className="text-xl font-bold mb-4">Contact</h3>
               <div className="text-gray-300 text-sm space-y-2">
-                <p>04152793472</p>
-                <p className="break-all">hello@slateblue-dove-624316.hostingersite.com</p>
+                <p>0468 472 757</p>
+                <p className="break-all">hello@sovereignparking.com.au</p>
               </div>
             </div>
           </div>
 
-          {/* Column 3: Quick Menu */}
-          <div>
-            <h3 className="text-xl font-bold mb-6">Quick Menu</h3>
-            <ul className="space-y-4">
-              {['About Us', 'Location', 'Contact', 'FAQs'].map((item) => (
-                <li key={item} className="flex items-center group cursor-pointer">
-                  <ArrowRightCircle size={18} className="text-pink-400 mr-3 group-hover:text-pink-300 transition-colors" />
-                  <span className="text-gray-300 text-sm group-hover:text-white transition-colors">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+ 
+{/* Column 3: Quick Menu */}
+<div>
+  <h3 className="text-xl font-bold mb-6">Quick Menu</h3>
+
+  <ul className="space-y-4">
+    {[
+      { name: 'About Us', href: '/about' },
+      { name: 'Location', href: '/location' },
+      { name: 'Contact', href: '/contact-us' },
+      { name: 'FAQs', href: '/faqs' },
+    ].map((item) => (
+      <li key={item.name}>
+        <a
+          href={item.href}
+          className="flex items-center group"
+        >
+          <ArrowRightCircle
+            size={18}
+            className="text-pink-400 mr-3 group-hover:text-pink-300 transition-colors"
+          />
+
+          <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+            {item.name}
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
 
           {/* Column 4: Connect & Logo */}
           <div className="space-y-6">
