@@ -46,7 +46,7 @@ const Contact = () => {
         },
         {
             title: "Information",
-            text: ["Call Us: 04152793472", "Email: hello@slateblue-dove-624316.hostingersite.com", "Opening hours: 6 am to 2 pm (on cruise days only)"],
+            text: ["Call Us: 0468472757", "Email: hello@sovereignparking.com.au", "Opening hours: 6 am to 2 pm (on cruise days only)"],
             type: "text"
         },
         {
