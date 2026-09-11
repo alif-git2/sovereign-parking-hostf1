@@ -705,6 +705,153 @@ function getParkingSlotNumber(booking) {
   return booking?.parking_slot || "";
 }
 
+function parseShuttleTimeToMinutes(value) {
+  const text = String(value || "").trim();
+
+  if (!text || text === "-") {
+    return null;
+  }
+
+  const match = text.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+
+  if (!match) {
+    return null;
+  }
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2] || 0);
+  const meridiem = String(match[3] || "").toLowerCase();
+
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || minutes > 59) {
+    return null;
+  }
+
+  if (meridiem) {
+    if (hours < 1 || hours > 12) {
+      return null;
+    }
+
+    if (meridiem === "am" && hours === 12) {
+      hours = 0;
+    }
+
+    if (meridiem === "pm" && hours !== 12) {
+      hours += 12;
+    }
+  } else if (hours > 23) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
+function getCruiseScheduleSortKey(booking) {
+  return {
+    toTerminal: parseShuttleTimeToMinutes(
+      getCruiseCarParkToTerminalShuttleOption(booking)
+    ),
+    toCarPark: parseShuttleTimeToMinutes(
+      getCruiseTerminalToCarParkShuttleOption(booking)
+    ),
+  };
+}
+
+function getParkingSlotSortNumber(booking) {
+  const value = String(getParkingSlotNumber(booking) || "").trim();
+  const match = value.match(/\d+(?:\.\d+)?/);
+
+  if (!match) {
+    return null;
+  }
+
+  const number = Number(match[0]);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+function compareNullableNumbers(left, right, direction = "asc") {
+  const leftMissing = left === null || left === undefined;
+  const rightMissing = right === null || right === undefined;
+
+  if (leftMissing && rightMissing) return 0;
+  if (leftMissing) return 1;
+  if (rightMissing) return -1;
+
+  const difference = left - right;
+
+  return direction === "asc" ? difference : -difference;
+}
+
+function compareCruiseScheduleTimeByField(
+  a,
+  b,
+  field,
+  direction = "asc"
+) {
+  const aTime = getCruiseScheduleSortKey(a);
+  const bTime = getCruiseScheduleSortKey(b);
+
+  if (field === "schedule_terminal_to_carpark") {
+    return compareNullableNumbers(
+      aTime.toCarPark,
+      bTime.toCarPark,
+      direction
+    );
+  }
+
+  return compareNullableNumbers(
+    aTime.toTerminal,
+    bTime.toTerminal,
+    direction
+  );
+}
+
+function getScheduleTimeSortIndicator(sortBy, sortOrder) {
+  if (sortBy === "schedule_cp_to_terminal") {
+    return sortOrder === "asc" ? "↑" : "↓";
+  }
+
+  if (sortBy === "schedule_terminal_to_carpark") {
+    return sortOrder === "asc" ? "↑" : "↓";
+  }
+
+  return "↕";
+}
+
+function getScheduleTimeSortTooltip(sortBy, sortOrder) {
+  if (sortBy === "schedule_cp_to_terminal") {
+    return `Sorted by CP To T: ${
+      sortOrder === "asc" ? "ascending" : "descending"
+    }`;
+  }
+
+  if (sortBy === "schedule_terminal_to_carpark") {
+    return `Sorted by T To CP: ${
+      sortOrder === "asc" ? "ascending" : "descending"
+    }`;
+  }
+
+  return "Sort by S Time";
+}
+
+function getParkingSlotSortIndicator(sortBy, sortOrder) {
+  if (sortBy !== "parking_slot") {
+    return "↕";
+  }
+
+  return sortOrder === "asc" ? "↑" : "↓";
+}
+
+function getParkingSlotSortTooltip(sortBy, sortOrder) {
+  if (sortBy !== "parking_slot") {
+    return "Sort by P Slot";
+  }
+
+  return `Sorted by P Slot: ${
+    sortOrder === "asc" ? "ascending" : "descending"
+  }`;
+}
+
 function getBookingAdminImages(booking) {
   const images = Array.isArray(booking?.admin_images)
     ? booking.admin_images.filter((image) => image?.url)
@@ -2806,8 +2953,24 @@ export default function BookingListPage({ bookingType }) {
           type: bookingType,
           page,
           limit: hasCalendarFilter ? Math.max(Number(filters.limit || 20), 100) : filters.limit,
-          sort_by: sortBy,
-          sort_order: sortOrder,
+          sort_by:
+            bookingType === "cruise" &&
+            [
+              "schedule_cp_to_terminal",
+              "schedule_terminal_to_carpark",
+              "parking_slot",
+            ].includes(sortBy)
+              ? "createdAt"
+              : sortBy,
+          sort_order:
+            bookingType === "cruise" &&
+            [
+              "schedule_cp_to_terminal",
+              "schedule_terminal_to_carpark",
+              "parking_slot",
+            ].includes(sortBy)
+              ? "desc"
+              : sortOrder,
 
           search: searchText || undefined,
           booking_id: isBookingIdSearch(searchText) ? searchText : undefined,
@@ -3029,10 +3192,34 @@ const visibleBookings = useMemo(() => {
     });
   }
 
+  if (
+    bookingType === "cruise" &&
+    ["schedule_cp_to_terminal", "schedule_terminal_to_carpark"].includes(
+      sortBy
+    )
+  ) {
+    rows.sort((a, b) =>
+      compareCruiseScheduleTimeByField(a, b, sortBy, sortOrder)
+    );
+  }
+
+  if (bookingType === "cruise" && sortBy === "parking_slot") {
+    rows.sort((a, b) =>
+      compareNullableNumbers(
+        getParkingSlotSortNumber(a),
+        getParkingSlotSortNumber(b),
+        sortOrder
+      )
+    );
+  }
+
   return rows;
 }, [
   bookings,
   bookingIdFromUrl,
+  bookingType,
+  sortBy,
+  sortOrder,
 ]);
 
 
@@ -3087,6 +3274,55 @@ const visibleBookings = useMemo(() => {
 
     setSortBy(field);
     setSortOrder("desc");
+  }
+
+  function handleScheduleTimeSort() {
+    if (sortBy === "schedule_cp_to_terminal" && sortOrder === "asc") {
+      setSortOrder("desc");
+      return;
+    }
+
+    if (sortBy === "schedule_cp_to_terminal" && sortOrder === "desc") {
+      setSortBy("schedule_terminal_to_carpark");
+      setSortOrder("asc");
+      return;
+    }
+
+    if (
+      sortBy === "schedule_terminal_to_carpark" &&
+      sortOrder === "asc"
+    ) {
+      setSortOrder("desc");
+      return;
+    }
+
+    if (
+      sortBy === "schedule_terminal_to_carpark" &&
+      sortOrder === "desc"
+    ) {
+      setSortBy("createdAt");
+      setSortOrder("desc");
+      return;
+    }
+
+    setSortBy("schedule_cp_to_terminal");
+    setSortOrder("asc");
+  }
+
+  function handleParkingSlotSort() {
+    if (sortBy === "parking_slot" && sortOrder === "asc") {
+      setSortOrder("desc");
+      return;
+    }
+
+    if (sortBy === "parking_slot" && sortOrder === "desc") {
+      setSortBy("createdAt");
+      setSortOrder("desc");
+      return;
+    }
+
+    setSortBy("parking_slot");
+    setSortOrder("asc");
   }
 
   async function loadEditCruiseShuttleSlots(
@@ -4426,20 +4662,103 @@ const visibleBookings = useMemo(() => {
                     <tr className="border-b border-gray-200 bg-gray-50 text-gray-700">
                       <th
                         onClick={() => handleSort("booking_id")}
-                        className="w-[18%] cursor-pointer px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide"
+                        className={`cursor-pointer px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide ${
+                          bookingType === "cruise" ? "w-[15%]" : "w-[18%]"
+                        }`}
                       >
                         Booking ID
                       </th>
-                      <th className="w-[18%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+
+                      <th
+                        className={`px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide ${
+                          bookingType === "cruise" ? "w-[15%]" : "w-[22%]"
+                        }`}
+                      >
                         Client Info
                       </th>
-                      <th className="w-[24%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+
+                      <th
+                        className={`px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide ${
+                          bookingType === "cruise" ? "w-[17%]" : "w-[20%]"
+                        }`}
+                      >
                         Booking Status
                       </th>
-                      <th className="w-[17%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+
+                      {bookingType === "cruise" && (
+                        <th className="w-[13%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+                          <button
+                            type="button"
+                            onClick={handleScheduleTimeSort}
+                            className="inline-flex items-center gap-1 whitespace-nowrap text-left"
+                            title={getScheduleTimeSortTooltip(
+                              sortBy,
+                              sortOrder
+                            )}
+                          >
+                            <span>S Time</span>
+                            <span
+                              aria-hidden="true"
+                              className={
+                                [
+                                  "schedule_cp_to_terminal",
+                                  "schedule_terminal_to_carpark",
+                                ].includes(sortBy)
+                                  ? "text-blue-600"
+                                  : "text-gray-400"
+                              }
+                            >
+                              {getScheduleTimeSortIndicator(
+                                sortBy,
+                                sortOrder
+                              )}
+                            </span>
+                          </button>
+                        </th>
+                      )}
+
+                      <th
+                        className={`px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide ${
+                          bookingType === "cruise" ? "w-[18%]" : "w-[25%]"
+                        }`}
+                      >
                         Payment
                       </th>
-                      <th className="w-[15%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+
+                      {bookingType === "cruise" && (
+                        <th className="w-[8%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+                          <button
+                            type="button"
+                            onClick={handleParkingSlotSort}
+                            className="inline-flex items-center gap-1 whitespace-nowrap text-left"
+                            title={getParkingSlotSortTooltip(
+                              sortBy,
+                              sortOrder
+                            )}
+                          >
+                            <span>P Slot</span>
+                            <span
+                              aria-hidden="true"
+                              className={
+                                sortBy === "parking_slot"
+                                  ? "text-blue-600"
+                                  : "text-gray-400"
+                              }
+                            >
+                              {getParkingSlotSortIndicator(
+                                sortBy,
+                                sortOrder
+                              )}
+                            </span>
+                          </button>
+                        </th>
+                      )}
+
+                      <th
+                        className={`px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide ${
+                          bookingType === "cruise" ? "w-[14%]" : "w-[15%]"
+                        }`}
+                      >
                         Actions
                       </th>
                     </tr>
@@ -4454,9 +4773,13 @@ const visibleBookings = useMemo(() => {
                           key={booking._id}
                           className="border-b border-gray-100 align-top transition-colors duration-200 hover:bg-gray-50"
                         >
-                          <td className="w-[18%] px-[1%] py-[1.2%]">
+                          <td
+                            className={`px-[1%] py-[1.2%] ${
+                              bookingType === "cruise" ? "w-[15%]" : "w-[18%]"
+                            }`}
+                          >
                             <div className="w-full overflow-hidden">
-                              <p className="truncate text-sm font-bold text-gray-900">
+                              <p className="break-all text-sm font-bold text-gray-900">
                                 {booking.booking_id}
                               </p>
                               <p className="mt-[2%] text-xs text-gray-500">
@@ -4468,9 +4791,13 @@ const visibleBookings = useMemo(() => {
                             </div>
                           </td>
 
-                          <td className="w-[18%] px-[1%] py-[1.2%]">
+                          <td
+                            className={`px-[1%] py-[1.2%] ${
+                              bookingType === "cruise" ? "w-[15%]" : "w-[22%]"
+                            }`}
+                          >
                             <div className="w-full overflow-hidden">
-                              <p className="truncate text-sm font-semibold text-gray-900">
+                              <p className="break-words text-sm font-semibold text-gray-900">
                                 {getCustomerName(booking)}
                               </p>
                               <p className="mt-[2%] break-words text-xs text-gray-500">
@@ -4482,7 +4809,11 @@ const visibleBookings = useMemo(() => {
                             </div>
                           </td>
 
-                          <td className="w-[24%] px-[1%] py-[1.2%]">
+                          <td
+                            className={`px-[1%] py-[1.2%] ${
+                              bookingType === "cruise" ? "w-[17%]" : "w-[20%]"
+                            }`}
+                          >
                             <div className="space-y-[6%]">
                               <Badge
                                 value={getBookingStatusLabel(booking)}
@@ -4499,29 +4830,35 @@ const visibleBookings = useMemo(() => {
                             <p className="mt-[2%] text-xs text-gray-500">
                               Location: {getLocationName(booking)}
                             </p>
+                          </td>
 
-                            {isCruiseBooking(booking) && (
-                              <div className="mt-2 space-y-1 text-xs text-gray-500">
-                                <p className="whitespace-nowrap">
+                          {bookingType === "cruise" && (
+                            <td className="w-[13%] px-[1%] py-[1.2%]">
+                              <div className="space-y-2 text-xs text-gray-500">
+                                <p>
                                   <span className="font-semibold text-gray-700">
-                                    Car park to terminal:
+                                    CP To T:
                                   </span>{" "}
                                   {getCruiseCarParkToTerminalShuttleOption(booking)}{" "}
                                   ({getCruiseCarParkToTerminalPassengerCount(booking)})
                                 </p>
 
-                                <p className="whitespace-nowrap">
+                                <p>
                                   <span className="font-semibold text-gray-700">
-                                    Terminal to car park:
+                                    T To CP:
                                   </span>{" "}
                                   {getCruiseTerminalToCarParkShuttleOption(booking)}{" "}
                                   ({getCruiseTerminalToCarParkPassengerCount(booking)})
                                 </p>
                               </div>
-                            )}
-                          </td>
+                            </td>
+                          )}
 
-                          <td className="w-[14%] px-[1%] py-[1.2%]">
+                          <td
+                            className={`px-[1%] py-[1.2%] ${
+                              bookingType === "cruise" ? "w-[18%]" : "w-[25%]"
+                            }`}
+                          >
                             <div className="w-full overflow-hidden">
                               <p className="text-sm font-semibold text-gray-900">
                                 {formatText(booking.payment_method)}
@@ -4558,8 +4895,20 @@ const visibleBookings = useMemo(() => {
                             </div>
                           </td>
 
-                          <td className="w-[15%] px-[1%] py-[1.2%]">
-                            <div className="grid min-w-0 grid-cols-2 gap-x-1 gap-y-0">
+                          {bookingType === "cruise" && (
+                            <td className="w-[8%] px-[1%] py-[1.2%]">
+                              <p className="break-words text-xs font-semibold text-gray-800">
+                                {getParkingSlotNumber(booking) || "Not Set"}
+                              </p>
+                            </td>
+                          )}
+
+                          <td
+                            className={`px-[1%] py-[1.2%] ${
+                              bookingType === "cruise" ? "w-[14%]" : "w-[15%]"
+                            }`}
+                          >
+                            <div className="grid min-w-0  gap-x-1 gap-y-0">
                               <button
                                 type="button"
                                 onClick={() => setViewBooking(booking)}
@@ -4584,7 +4933,7 @@ const visibleBookings = useMemo(() => {
                                     : "text-gray-400 cursor-not-allowed"
                                 }`}
                               >
-                              Images ({getBookingAdminImageCount(booking)})
+                               Images ({getBookingAdminImageCount(booking)})
                               </button>
                               <button
                                 type="button"
@@ -4640,14 +4989,6 @@ const visibleBookings = useMemo(() => {
                               </button>
                             </div>
 
-                            {isCruiseBooking(booking) && (
-                              <div className="mt-2 text-xs text-gray-600">
-                                <span className="font-semibold text-gray-800">
-                                  Parking Slot:
-                                </span>{" "}
-                                {getParkingSlotNumber(booking) || "Not Set"}
-                              </div>
-                            )}
                           </td>
                         </tr>
                       );
