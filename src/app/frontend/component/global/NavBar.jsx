@@ -41,9 +41,9 @@ const PageEntries = [
 const CONTACT = {
   address: "9 Harris Road, Pinkenba QLD 4008",
   mapUrl: "https://maps.app.goo.gl/n4DkhwVm49GsWc4f8",
-  email: "hello@slateblue-dove-624316.hostingersite.com",
-  phoneText: "0415 279 3472",
-  phoneHref: "tel:+614152793472",
+  email: "hello@sovereignparking.com.au",
+  phoneText: "0468 472 757",
+  phoneHref: "tel:+610468472757",
 };
 
 const Navbar = () => {
