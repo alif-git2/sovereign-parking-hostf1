@@ -2872,6 +2872,10 @@ export default function BookingListPage({ bookingType }) {
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [cruiseCustomSort, setCruiseCustomSort] = useState({
+    field: "",
+    order: "",
+  });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -2953,24 +2957,8 @@ export default function BookingListPage({ bookingType }) {
           type: bookingType,
           page,
           limit: hasCalendarFilter ? Math.max(Number(filters.limit || 20), 100) : filters.limit,
-          sort_by:
-            bookingType === "cruise" &&
-            [
-              "schedule_cp_to_terminal",
-              "schedule_terminal_to_carpark",
-              "parking_slot",
-            ].includes(sortBy)
-              ? "createdAt"
-              : sortBy,
-          sort_order:
-            bookingType === "cruise" &&
-            [
-              "schedule_cp_to_terminal",
-              "schedule_terminal_to_carpark",
-              "parking_slot",
-            ].includes(sortBy)
-              ? "desc"
-              : sortOrder,
+          sort_by: sortBy,
+          sort_order: sortOrder,
 
           search: searchText || undefined,
           booking_id: isBookingIdSearch(searchText) ? searchText : undefined,
@@ -3195,20 +3183,28 @@ const visibleBookings = useMemo(() => {
   if (
     bookingType === "cruise" &&
     ["schedule_cp_to_terminal", "schedule_terminal_to_carpark"].includes(
-      sortBy
+      cruiseCustomSort.field
     )
   ) {
     rows.sort((a, b) =>
-      compareCruiseScheduleTimeByField(a, b, sortBy, sortOrder)
+      compareCruiseScheduleTimeByField(
+        a,
+        b,
+        cruiseCustomSort.field,
+        cruiseCustomSort.order
+      )
     );
   }
 
-  if (bookingType === "cruise" && sortBy === "parking_slot") {
+  if (
+    bookingType === "cruise" &&
+    cruiseCustomSort.field === "parking_slot"
+  ) {
     rows.sort((a, b) =>
       compareNullableNumbers(
         getParkingSlotSortNumber(a),
         getParkingSlotSortNumber(b),
-        sortOrder
+        cruiseCustomSort.order
       )
     );
   }
@@ -3218,8 +3214,7 @@ const visibleBookings = useMemo(() => {
   bookings,
   bookingIdFromUrl,
   bookingType,
-  sortBy,
-  sortOrder,
+  cruiseCustomSort,
 ]);
 
 
@@ -3251,6 +3246,10 @@ const visibleBookings = useMemo(() => {
 
     setSortBy("createdAt");
     setSortOrder("desc");
+    setCruiseCustomSort({
+      field: "",
+      order: "",
+    });
     setPage(1);
 
     router.replace(`/admin/bookings/${bookingType}`);
@@ -3261,12 +3260,21 @@ const visibleBookings = useMemo(() => {
 
     setSortBy("createdAt");
     setSortOrder("desc");
+    setCruiseCustomSort({
+      field: "",
+      order: "",
+    });
     setPage(1);
 
     router.replace(`/admin/bookings/${bookingType}`);
   }
 
   function handleSort(field) {
+    setCruiseCustomSort({
+      field: "",
+      order: "",
+    });
+
     if (sortBy === field) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
@@ -3277,52 +3285,81 @@ const visibleBookings = useMemo(() => {
   }
 
   function handleScheduleTimeSort() {
-    if (sortBy === "schedule_cp_to_terminal" && sortOrder === "asc") {
-      setSortOrder("desc");
-      return;
-    }
+    setCruiseCustomSort((current) => {
+      if (
+        current.field === "schedule_cp_to_terminal" &&
+        current.order === "asc"
+      ) {
+        return {
+          field: "schedule_cp_to_terminal",
+          order: "desc",
+        };
+      }
 
-    if (sortBy === "schedule_cp_to_terminal" && sortOrder === "desc") {
-      setSortBy("schedule_terminal_to_carpark");
-      setSortOrder("asc");
-      return;
-    }
+      if (
+        current.field === "schedule_cp_to_terminal" &&
+        current.order === "desc"
+      ) {
+        return {
+          field: "schedule_terminal_to_carpark",
+          order: "asc",
+        };
+      }
 
-    if (
-      sortBy === "schedule_terminal_to_carpark" &&
-      sortOrder === "asc"
-    ) {
-      setSortOrder("desc");
-      return;
-    }
+      if (
+        current.field === "schedule_terminal_to_carpark" &&
+        current.order === "asc"
+      ) {
+        return {
+          field: "schedule_terminal_to_carpark",
+          order: "desc",
+        };
+      }
 
-    if (
-      sortBy === "schedule_terminal_to_carpark" &&
-      sortOrder === "desc"
-    ) {
-      setSortBy("createdAt");
-      setSortOrder("desc");
-      return;
-    }
+      if (
+        current.field === "schedule_terminal_to_carpark" &&
+        current.order === "desc"
+      ) {
+        return {
+          field: "",
+          order: "",
+        };
+      }
 
-    setSortBy("schedule_cp_to_terminal");
-    setSortOrder("asc");
+      return {
+        field: "schedule_cp_to_terminal",
+        order: "asc",
+      };
+    });
   }
 
   function handleParkingSlotSort() {
-    if (sortBy === "parking_slot" && sortOrder === "asc") {
-      setSortOrder("desc");
-      return;
-    }
+    setCruiseCustomSort((current) => {
+      if (
+        current.field === "parking_slot" &&
+        current.order === "asc"
+      ) {
+        return {
+          field: "parking_slot",
+          order: "desc",
+        };
+      }
 
-    if (sortBy === "parking_slot" && sortOrder === "desc") {
-      setSortBy("createdAt");
-      setSortOrder("desc");
-      return;
-    }
+      if (
+        current.field === "parking_slot" &&
+        current.order === "desc"
+      ) {
+        return {
+          field: "",
+          order: "",
+        };
+      }
 
-    setSortBy("parking_slot");
-    setSortOrder("asc");
+      return {
+        field: "parking_slot",
+        order: "asc",
+      };
+    });
   }
 
   async function loadEditCruiseShuttleSlots(
@@ -4692,8 +4729,8 @@ const visibleBookings = useMemo(() => {
                             onClick={handleScheduleTimeSort}
                             className="inline-flex items-center gap-1 whitespace-nowrap text-left"
                             title={getScheduleTimeSortTooltip(
-                              sortBy,
-                              sortOrder
+                              cruiseCustomSort.field,
+                              cruiseCustomSort.order
                             )}
                           >
                             <span>S Time</span>
@@ -4703,14 +4740,14 @@ const visibleBookings = useMemo(() => {
                                 [
                                   "schedule_cp_to_terminal",
                                   "schedule_terminal_to_carpark",
-                                ].includes(sortBy)
+                                ].includes(cruiseCustomSort.field)
                                   ? "text-blue-600"
                                   : "text-gray-400"
                               }
                             >
                               {getScheduleTimeSortIndicator(
-                                sortBy,
-                                sortOrder
+                                cruiseCustomSort.field,
+                                cruiseCustomSort.order
                               )}
                             </span>
                           </button>
@@ -4732,22 +4769,22 @@ const visibleBookings = useMemo(() => {
                             onClick={handleParkingSlotSort}
                             className="inline-flex items-center gap-1 whitespace-nowrap text-left"
                             title={getParkingSlotSortTooltip(
-                              sortBy,
-                              sortOrder
+                              cruiseCustomSort.field,
+                              cruiseCustomSort.order
                             )}
                           >
                             <span>P Slot</span>
                             <span
                               aria-hidden="true"
                               className={
-                                sortBy === "parking_slot"
+                                cruiseCustomSort.field === "parking_slot"
                                   ? "text-blue-600"
                                   : "text-gray-400"
                               }
                             >
                               {getParkingSlotSortIndicator(
-                                sortBy,
-                                sortOrder
+                                cruiseCustomSort.field,
+                                cruiseCustomSort.order
                               )}
                             </span>
                           </button>
@@ -4908,18 +4945,18 @@ const visibleBookings = useMemo(() => {
                               bookingType === "cruise" ? "w-[14%]" : "w-[15%]"
                             }`}
                           >
-                            <div className="grid min-w-0  gap-x-1 gap-y-0">
+                            <div className="grid min-w-0 gap-x-1 gap-y-0">
                               <button
                                 type="button"
                                 onClick={() => setViewBooking(booking)}
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 View
                               </button>
                               <button
                                 type="button"
                                 onClick={() => openEditModal(booking)}
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 Edit
                               </button>
@@ -4927,7 +4964,7 @@ const visibleBookings = useMemo(() => {
                                 type="button"
                                 disabled={getBookingAdminImageCount(booking) === 0}
                                 onClick={() => setViewImagesBooking(booking)}
-                                className={`min-w-0 break-words py-0 text-left text-[11px] leading-4 ${
+                                className={`min-w-0 break-words py-0 text-left text-[11px] leading-4 pb-[2px] ${
                                   getBookingAdminImageCount(booking) > 0
                                     ? "text-blue-500 hover:underline"
                                     : "text-gray-400 cursor-not-allowed"
@@ -4941,7 +4978,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `refund:${bookingId}`
                                 }
                                 onClick={() => openFeeAction("refund", booking)}
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 Refunded
                               </button>
@@ -4951,7 +4988,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `credit:${bookingId}`
                                 }
                                 onClick={() => openFeeAction("credit", booking)}
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 Credit
                               </button>
@@ -4961,7 +4998,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `cancel:${bookingId}`
                                 }
                                 onClick={() => openFeeAction("cancel", booking)}
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 Cancellation
                               </button>
@@ -4973,7 +5010,7 @@ const visibleBookings = useMemo(() => {
                                 onClick={() =>
                                   runBookingAction("resend_email", booking)
                                 }
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 Resend Email
                               </button>
@@ -4983,7 +5020,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `delete:${bookingId}`
                                 }
                                 onClick={() => runBookingAction("delete", booking)}
-                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline pb-[2px]"
                               >
                                 Delete
                               </button>
