@@ -4430,16 +4430,16 @@ const visibleBookings = useMemo(() => {
                       >
                         Booking ID
                       </th>
-                      <th className="w-[22%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+                      <th className="w-[18%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
                         Client Info
                       </th>
-                      <th className="w-[20%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+                      <th className="w-[24%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
                         Booking Status
                       </th>
-                      <th className="w-[20%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+                      <th className="w-[17%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
                         Payment
                       </th>
-                      <th className="w-[20%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
+                      <th className="w-[15%] px-[1%] py-[1%] text-xs font-semibold uppercase tracking-wide">
                         Actions
                       </th>
                     </tr>
@@ -4468,7 +4468,7 @@ const visibleBookings = useMemo(() => {
                             </div>
                           </td>
 
-                          <td className="w-[22%] px-[1%] py-[1.2%]">
+                          <td className="w-[18%] px-[1%] py-[1.2%]">
                             <div className="w-full overflow-hidden">
                               <p className="truncate text-sm font-semibold text-gray-900">
                                 {getCustomerName(booking)}
@@ -4482,7 +4482,7 @@ const visibleBookings = useMemo(() => {
                             </div>
                           </td>
 
-                          <td className="w-[20%] px-[1%] py-[1.2%]">
+                          <td className="w-[24%] px-[1%] py-[1.2%]">
                             <div className="space-y-[6%]">
                               <Badge
                                 value={getBookingStatusLabel(booking)}
@@ -4499,9 +4499,29 @@ const visibleBookings = useMemo(() => {
                             <p className="mt-[2%] text-xs text-gray-500">
                               Location: {getLocationName(booking)}
                             </p>
+
+                            {isCruiseBooking(booking) && (
+                              <div className="mt-2 space-y-1 text-xs text-gray-500">
+                                <p className="whitespace-nowrap">
+                                  <span className="font-semibold text-gray-700">
+                                    Car park to terminal:
+                                  </span>{" "}
+                                  {getCruiseCarParkToTerminalShuttleOption(booking)}{" "}
+                                  ({getCruiseCarParkToTerminalPassengerCount(booking)})
+                                </p>
+
+                                <p className="whitespace-nowrap">
+                                  <span className="font-semibold text-gray-700">
+                                    Terminal to car park:
+                                  </span>{" "}
+                                  {getCruiseTerminalToCarParkShuttleOption(booking)}{" "}
+                                  ({getCruiseTerminalToCarParkPassengerCount(booking)})
+                                </p>
+                              </div>
+                            )}
                           </td>
 
-                          <td className="w-[20%] px-[1%] py-[1.2%]">
+                          <td className="w-[14%] px-[1%] py-[1.2%]">
                             <div className="w-full overflow-hidden">
                               <p className="text-sm font-semibold text-gray-900">
                                 {formatText(booking.payment_method)}
@@ -4532,25 +4552,25 @@ const visibleBookings = useMemo(() => {
                                   </strong>
                                 </p>
                               )}
-                              <p className="mt-[6%] break-words text-xs text-gray-500">
+                              <p className="mt-[6%] break-all text-xs text-gray-500">
                                 Ref: {getProviderReference(booking)}
                               </p>
                             </div>
                           </td>
 
-                          <td className="w-[20%] px-[1%] py-[1.2%]">
-                            <div className="flex flex-wrap gap-[3%]">
+                          <td className="w-[15%] px-[1%] py-[1.2%]">
+                            <div className="grid min-w-0 grid-cols-2 gap-x-1 gap-y-0">
                               <button
                                 type="button"
                                 onClick={() => setViewBooking(booking)}
-                                className="pr-1 border-e text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 View
                               </button>
                               <button
                                 type="button"
                                 onClick={() => openEditModal(booking)}
-                                className="pr-1 border-e text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 Edit
                               </button>
@@ -4558,13 +4578,13 @@ const visibleBookings = useMemo(() => {
                                 type="button"
                                 disabled={getBookingAdminImageCount(booking) === 0}
                                 onClick={() => setViewImagesBooking(booking)}
-                                className={`pr-1 border-e text-xs ${
+                                className={`min-w-0 break-words py-0 text-left text-[11px] leading-4 ${
                                   getBookingAdminImageCount(booking) > 0
-                                    ? "text-blue-500 cursor-pointer"
+                                    ? "text-blue-500 hover:underline"
                                     : "text-gray-400 cursor-not-allowed"
                                 }`}
                               >
-                                View Images ({getBookingAdminImageCount(booking)})
+                              Images ({getBookingAdminImageCount(booking)})
                               </button>
                               <button
                                 type="button"
@@ -4572,7 +4592,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `refund:${bookingId}`
                                 }
                                 onClick={() => openFeeAction("refund", booking)}
-                                className="pr-1 border-e text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 Refunded
                               </button>
@@ -4582,7 +4602,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `credit:${bookingId}`
                                 }
                                 onClick={() => openFeeAction("credit", booking)}
-                                className="pr-1 border-e text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 Credit
                               </button>
@@ -4592,7 +4612,7 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `cancel:${bookingId}`
                                 }
                                 onClick={() => openFeeAction("cancel", booking)}
-                                className="pr-1 border-e text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 Cancellation
                               </button>
@@ -4604,7 +4624,7 @@ const visibleBookings = useMemo(() => {
                                 onClick={() =>
                                   runBookingAction("resend_email", booking)
                                 }
-                                className="pr-1 border-e text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 Resend Email
                               </button>
@@ -4614,11 +4634,20 @@ const visibleBookings = useMemo(() => {
                                   actionLoading === `delete:${bookingId}`
                                 }
                                 onClick={() => runBookingAction("delete", booking)}
-                                className="pr-1 text-blue-500 cursor-pointer text-xs"
+                                className="min-w-0 break-words py-0 text-left text-[11px] leading-4 text-blue-500 hover:underline"
                               >
                                 Delete
                               </button>
                             </div>
+
+                            {isCruiseBooking(booking) && (
+                              <div className="mt-2 text-xs text-gray-600">
+                                <span className="font-semibold text-gray-800">
+                                  Parking Slot:
+                                </span>{" "}
+                                {getParkingSlotNumber(booking) || "Not Set"}
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );
