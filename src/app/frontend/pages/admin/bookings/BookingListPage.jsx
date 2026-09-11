@@ -4733,7 +4733,7 @@ const visibleBookings = useMemo(() => {
                               cruiseCustomSort.order
                             )}
                           >
-                            <span>S Time</span>
+                            <span>Shuttle</span>
                             <span
                               aria-hidden="true"
                               className={
@@ -4874,7 +4874,7 @@ const visibleBookings = useMemo(() => {
                               <div className="space-y-2 text-xs text-gray-500">
                                 <p>
                                   <span className="font-semibold text-gray-700">
-                                    CP To T:
+                                    CP - T:
                                   </span>{" "}
                                   {getCruiseCarParkToTerminalShuttleOption(booking)}{" "}
                                   ({getCruiseCarParkToTerminalPassengerCount(booking)})
@@ -4882,7 +4882,7 @@ const visibleBookings = useMemo(() => {
 
                                 <p>
                                   <span className="font-semibold text-gray-700">
-                                    T To CP:
+                                    T - CP:
                                   </span>{" "}
                                   {getCruiseTerminalToCarParkShuttleOption(booking)}{" "}
                                   ({getCruiseTerminalToCarParkPassengerCount(booking)})
